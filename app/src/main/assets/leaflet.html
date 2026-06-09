@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    
+    <!-- Leaflet JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100vh;
+            width: 100vw;
+        }
+        
+        #map {
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+        
+        .info-box {
+            padding: 12px;
+            background: white;
+            border-radius: 6px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            font-size: 14px;
+            max-width: 250px;
+        }
+        
+        .marker-laporan {
+            background-color: #4CAF50;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        
+        .marker-cuaca {
+            background-color: #2196F3;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        
+        .leaflet-popup-content {
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    
+    <script>
+        // Initialize map centered on Jakarta
+        const map = L.map('map').setView([-6.2088, 106.8456], 12);
+        
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19,
+            minZoom: 2,
+            tileSize: 256
+        }).addTo(map);
+        
+        // Store markers
+        let markers = {};
+        let currentMarker = null;
+        let markerType = 'laporan'; // 'laporan' or 'cuaca'
+        
+        // Set marker type
+        function setMarkerType(type) {
+            markerType = type;
+        }
+        
+        // Add marker function
+        function addMarker(lat, lon, cityName, info, type) {
+            const key = type + '_' + cityName;
+            
+            // Remove previous marker
+            if (markers[key]) {
+                map.removeLayer(markers[key]);
+            }
+            
+            // Determine marker color
+            let markerClass = 'marker-laporan';
+            let emoji = '📍';
+            if (type === 'cuaca') {
+                markerClass = 'marker-cuaca';
+                emoji = '🌤️';
+            }
+            
+            // Create custom icon
+            const customIcon = L.divIcon({
+                className: markerClass,
+                html: `<div style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 18px;">
+                    ${emoji}
+                </div>`,
+                iconSize: [40, 40],
+                iconAnchor: [20, 20],
+                popupAnchor: [0, -20]
+            });
+            
+            // Create marker
+            const marker = L.marker([lat, lon], {
+                icon: customIcon
+            }).bindPopup(`
+                <div class="info-box">
+                    <strong>${cityName}</strong><br>
+                    ${info}
+                </div>
+            `).addTo(map);
+            
+            // Store marker
+            markers[key] = marker;
+            currentMarker = marker;
+            
+            // Center map
+            map.setView([lat, lon], 13);
+            marker.openPopup();
+        }
+        
+        // Functions exposed to Android
+        window.mapFunctions = {
+            addMarker: addMarker,
+            setMarkerType: setMarkerType,
+            centerMap: function(lat, lon) {
+                map.setView([lat, lon], 13);
+            },
+            clearMarkers: function() {
+                Object.keys(markers).forEach(key => {
+                    map.removeLayer(markers[key]);
+                });
+                markers = {};
+            }
+        };
+        
+        // Handle map click
+        map.on('click', function(e) {
+            const lat = e.latlng.lat;
+            const lon = e.latlng.lng;
+            
+            if (typeof AndroidBridge !== 'undefined') {
+                AndroidBridge.onMapClick(lat, lon);
+            }
+        });
+    </script>
+</body>
+</html>
