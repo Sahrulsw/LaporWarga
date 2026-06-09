@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">LaporWarga</string>
+    <string name="beranda">Beranda</string>
+    <string name="lapor">Lapor</string>
+    <string name="riwayat">Riwayat</string>
+    <string name="login">Login</string>
+    <string name="ambil_foto">Ambil Foto</string>
+    <string name="kirim_laporan">Kirim Laporan</string>
+    <string name="laporan_diterima">Laporan Diterima!</string>
+</resources>
